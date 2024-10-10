@@ -1,0 +1,294 @@
+module RegexpTest;
+
+
+import Minilib.Text.RegExp;
+import Minilib.Text.StringEx;
+import Minilib.Testing.UnitTest;
+
+_NotMatch: String;
+_NotMatch = "NotMatch";
+
+
+assert_result: [a: Eq, a: ToString] Result ErrMsg a -> Result ErrMsg a -> IOFail ();
+assert_result = |expected, actual| (
+    let _ = *if expected.is_ok {
+        assert_equal("eq", expected, actual)
+    } else {
+        let _ = *assert_true("is_err", actual.is_err);
+        // check whether it contains the expected error message
+        let check = actual.as_err.find(expected.as_err, 0).is_some;
+        assert_true("does not contain expected error message:" +
+            " expected=" + expected.as_err +
+            " actual=" + actual.as_err, 
+            check)
+    };
+    pure()
+);
+
+test_regexp_match_flags: (String, String, String, Result ErrMsg (Array String)) -> TestCase;
+test_regexp_match_flags = |(pattern, flags, target, expected)| (
+    let testname = "test_regexp_match_flags(" + pattern + "," + flags + "," + target + ")";
+    make_test(testname) $ |_|
+    let actual = do {
+        let regexp = *RegExp::compile(pattern, flags);
+        regexp.match(target)
+    };
+    assert_result(expected, actual)
+);
+
+test_regexp_match: (String, String, Result ErrMsg (Array String)) -> TestCase;
+test_regexp_match = |(pattern, target, expected)| (
+    test_regexp_match_flags $ (pattern, "", target, expected)
+);
+
+test_regexp_match_all: (String, String, String, Result ErrMsg (Array (Array String))) -> TestCase;
+test_regexp_match_all = |(pattern, flags, target, expected)| (
+    let testname = "test_regexp_match_all(" + pattern + "," + flags + "," + target + ")";
+    make_test(testname) $ |_|
+    let actual = do {
+        let regexp = *RegExp::compile(pattern, flags);
+        pure $ regexp.match_all(target)
+    };
+    assert_result(expected, actual)
+);
+
+test_regexp_replace_all: (String, String, String, String, Result ErrMsg String) -> TestCase;
+test_regexp_replace_all = |(pattern, flags, target, replacement, expected)| (
+    let testname = "test_regexp_replace_all(" + pattern + "," + flags + "," + target + "," + replacement + ")";
+    make_test(testname) $ |_|
+    let actual = do {
+        let regexp = *RegExp::compile(pattern, flags);
+        pure $ regexp.replace_all(target, replacement)
+    };
+    assert_result(expected, actual)
+);
+
+
+test_empty: TestCase;
+test_empty = (
+    [
+        test_regexp_match $ ("", "", ok $ [""]),
+        test_regexp_match $ ("", "", ok $ [""]),
+        test_regexp_match $ ("a", "", err $ _NotMatch),
+        TestCase::empty
+    ].run_tests
+);
+
+test_char_class_bracket: TestCase;
+test_char_class_bracket = (
+    [
+        test_regexp_match $ ("[a-z]", "a", ok $ ["a"]),
+        test_regexp_match $ ("[a-z]", "m", ok $ ["m"]),
+        test_regexp_match $ ("[a-z]", "z", ok $ ["z"]),
+        test_regexp_match $ ("[a-z]", "A", err $ _NotMatch),
+        test_regexp_match $ ("[^a-z]", "a", err $ _NotMatch),
+        test_regexp_match $ ("[^a-z]", "A", ok $ ["A"]),
+        test_regexp_match $ ("[-a-z]", "-", ok $ ["-"]),
+        test_regexp_match $ ("[a-z-]", "-", ok $ ["-"]),
+        //test_regexp_match $ ("[---]", "-", ok $ ["-"]),   // not supported
+        test_regexp_match $ ("[-]", "-", ok $ ["-"]),
+        test_regexp_match $ ("[a-ceg-z]", "c", ok $ ["c"]),
+        test_regexp_match $ ("[a-ceg-z]", "d", err $ _NotMatch),
+        test_regexp_match $ ("[a-ceg-z]", "e", ok $ ["e"]),
+        test_regexp_match $ ("[a-ceg-z]", "f", err $ _NotMatch),
+        test_regexp_match $ ("[a-ceg-z]", "g", ok $ ["g"]),
+        test_regexp_match $ ("[a-z", "a", err $ "']' is missing"),
+        test_regexp_match $ ("[a-z\\]]", "]", ok $ ["]"]),
+        test_regexp_match $ ("[\\-]", "-", ok $ ["-"]),
+        test_regexp_match $ ("[\\\\]", "\\", ok $ ["\\"]),
+        test_regexp_match $ ("[\\d]", "0", ok $ ["0"]),
+        test_regexp_match $ ("[\\w]", "a", ok $ ["a"]),
+        test_regexp_match $ ("[\\s]", " ", ok $ [" "]),
+        test_regexp_match $ ("[\\t]", "\t", ok $ ["\t"]),
+        test_regexp_match $ ("[\\r]", "\r", ok $ ["\r"]),
+        test_regexp_match $ ("[\\n]", "\n", ok $ ["\n"]),
+        test_regexp_match $ ("[\\v]", "\u000b", ok $ ["\u000b"]),
+        test_regexp_match $ ("[\\f]", "\u000c", ok $ ["\u000c"]),
+        test_regexp_match $ ("[\\b]", "\u0008", ok $ ["\u0008"]),
+        TestCase::empty
+    ].run_tests
+);
+
+test_char_class_nonbracket: TestCase;
+test_char_class_nonbracket = (
+    [
+        test_regexp_match $ (".", "a", ok $ ["a"]),
+        test_regexp_match $ (".", "\n", err $ _NotMatch),
+        test_regexp_match $ ("\\d", "0", ok $ ["0"]),
+        test_regexp_match $ ("\\D", "0", err $ _NotMatch),
+        test_regexp_match $ ("\\w", "a", ok $ ["a"]),
+        test_regexp_match $ ("\\w", "_", ok $ ["_"]),
+        test_regexp_match $ ("\\W", "a", err $ _NotMatch),
+        test_regexp_match $ ("\\W", "_", err $ _NotMatch),
+        test_regexp_match $ ("\\s", " ", ok $ [" "]),
+        test_regexp_match $ ("\\s", "\n", ok $ ["\n"]),
+        test_regexp_match $ ("\\S", " ", err $ _NotMatch),
+        test_regexp_match $ ("\\S", "\n", err $ _NotMatch),
+        test_regexp_match $ ("\\t", "\t", ok $ ["\t"]),
+        test_regexp_match $ ("\\r", "\r", ok $ ["\r"]),
+        test_regexp_match $ ("\\n", "\n", ok $ ["\n"]),
+        test_regexp_match $ ("\\v", "\u000b", ok $ ["\u000b"]),
+        test_regexp_match $ ("\\f", "\u000c", ok $ ["\u000c"]),
+        TestCase::empty
+    ].run_tests
+);
+
+test_sequence: TestCase;
+test_sequence = (
+    [
+        test_regexp_match $ (".\\w\\S[a-z][\\w]", "abcde", ok $ ["abcde"]),
+        TestCase::empty
+    ].run_tests
+);
+
+test_assertion: TestCase;
+test_assertion = (
+    [
+        test_regexp_match $ ("^$", "", ok $ [""]),
+        test_regexp_match $ ("^abc", "abc", ok $ ["abc"]),
+        test_regexp_match $ ("a^bc", "abc", err $ _NotMatch),
+        test_regexp_match $ ("abc$", "abc", ok $ ["abc"]),
+        test_regexp_match $ ("abc$", "abcde", err $ _NotMatch),
+        test_regexp_match $ ("ab$c", "abc", err $ _NotMatch),
+        TestCase::empty
+    ].run_tests
+);
+
+test_quant: TestCase;
+test_quant = (
+    [
+        test_regexp_match $ ("\\w*", "", ok $ [""]),
+        test_regexp_match $ ("\\w*", "abc", ok $ ["abc"]),
+        test_regexp_match $ ("\\w+", "", err $ _NotMatch),
+        test_regexp_match $ ("\\w+", "abc", ok $ ["abc"]),
+        test_regexp_match $ ("a+b+", "aabbcc", ok $ ["aabb"]),
+        test_regexp_match $ ("a{0,2}", "b", ok $ [""]),
+        test_regexp_match $ ("a{0,2}", "ab", ok $ ["a"]),
+        test_regexp_match $ ("a{0,2}", "aab", ok $ ["aa"]),
+        test_regexp_match $ ("a{0,2}", "aaab", ok $ ["aa"]),
+        test_regexp_match $ ("a{1,}", "b", err $ _NotMatch),
+        test_regexp_match $ ("a{1,}", "ab", ok $ ["a"]),
+        test_regexp_match $ ("a{1,}", "aab", ok $ ["aa"]),
+        test_regexp_match $ ("a{1,}", "aaab", ok $ ["aaa"]),
+        test_regexp_match $ ("a{2}", "b", err $ _NotMatch),
+        test_regexp_match $ ("a{2}", "ab", err $ _NotMatch),
+        test_regexp_match $ ("a{2}", "aab", ok $ ["aa"]),
+        test_regexp_match $ ("a{2}", "aaab", ok $ ["aa"]),
+        test_regexp_match $ ("a{3,5}", "aab", err $ _NotMatch),
+        test_regexp_match $ ("a{3,5}", "aaab", ok $ ["aaa"]),
+        test_regexp_match $ ("a{3,5}", "aaaab", ok $ ["aaaa"]),
+        test_regexp_match $ ("a{3,5}", "aaaaab", ok $ ["aaaaa"]),
+        test_regexp_match $ ("a{3,5}", "aaaaaab", ok $ ["aaaaa"]),
+        test_regexp_match $ ("a{3,5}$", "aaaaaab", err $ _NotMatch),
+        test_regexp_match $ ("a{5,3}", "aab", err $ "Invalid quantifier:{5,3}"),
+        TestCase::empty
+    ].run_tests
+);
+
+test_group: TestCase;
+test_group = (
+    [
+        test_regexp_match $ (".(..).", "abcde", ok $ ["abcd", "bc"]),
+        test_regexp_match $ ("(\\w(\\w) )+", "ab cd ef ", ok $ ["ab cd ef ", "ef ", "f"]),
+        test_regexp_match $ ("((\\w+)-)?(\\w+)-(\\w+)", "ab-cd-ef", ok $ ["ab-cd-ef", "ab-", "ab", "cd", "ef"]),
+        test_regexp_match $ ("((\\w+)-)?(\\w+)-(\\w+)", "cd-ef", ok $ ["cd-ef", "", "", "cd", "ef"]),
+        test_regexp_match $ ("[A-Z]([a-z]+)", "abc Def ghi Jkl", ok $ ["Def", "ef"]),
+        TestCase::empty
+    ].run_tests
+);
+
+test_either: TestCase;
+test_either = (
+    [
+        test_regexp_match $ ("az\\w+|\\w+d|ab", "abcde", ok $ ["abcd"]),
+        test_regexp_match $ ("(az\\w+|\\w+d|ab)", "abcde", ok $ ["abcd", "abcd"]),
+        test_regexp_match $ ("^[a-z]([a-z])[a-z]|[\\d]([\\d])[\\d]$", "abcd", ok $ ["abc", "b", ""]),
+        test_regexp_match $ ("(\\d+|[a-z]+)(-\\d+|-[a-z]+)*", "01-ab-34", ok $ ["01-ab-34", "01", "-34"]),
+        TestCase::empty
+    ].run_tests
+);
+
+test_match_g: TestCase;
+test_match_g = (
+    [
+        test_regexp_match_flags $ ("[a-z]+", "g", "012 abc def ghi", ok $ ["abc", "def", "ghi"]),
+        test_regexp_match_flags $ ("^[a-z]+", "g", "abc def ghi", ok $ ["abc"]),
+        test_regexp_match_flags $ ("[a-z]+$", "g", "abc def ghi", ok $ ["ghi"]),
+        test_regexp_match_flags $ ("[A-Z]([a-z]+)", "g", "abc Def ghi Jkl", ok $ ["Def", "Jkl"]),
+        test_regexp_match_flags $ ("[A-Z][a-z]+", "g", "abc def ghi jkl", err $ _NotMatch),
+        TestCase::empty
+    ].run_tests
+);
+
+test_match_all: TestCase;
+test_match_all = (
+    [
+        test_regexp_match_all $ ("[a-z]([a-z])[a-z]", "", "012 abc def ghi", ok $ [["abc", "b"], ["def", "e"], ["ghi", "h"]]),
+        test_regexp_match_all $ ("^[a-z]+", "", "abc def ghi", ok $ [["abc"]]),
+        test_regexp_match_all $ ("[a-z]+$", "", "abc def ghi", ok $ [["ghi"]]),
+        test_regexp_match_all $ ("[A-Z]([a-z]+)", "", "abc Def ghi Jkl", ok $ [["Def", "ef"], ["Jkl", "kl"]]),
+        test_regexp_match_all $ ("[A-Z][a-z]+", "", "abc def ghi jkl", ok $ []),
+        TestCase::empty
+    ].run_tests
+);
+
+test_replace_all: TestCase;
+test_replace_all = (
+    [
+        test_regexp_replace_all $ ("", "", "", "", ok $ ""),
+        test_regexp_replace_all $ ("\\w+", "", "ab cd ef", "x", ok $ "x x x"),
+        test_regexp_replace_all $ ("\\w+", "", "ab cd ef", "x$$", ok $ "x$ x$ x$"),
+        test_regexp_replace_all $ ("\\w+", "", "ab cd ef", "x$&", ok $ "xab xcd xef"),
+        test_regexp_replace_all $ ("\\w+", "", "ab cd ef", "x$0", ok $ "xab xcd xef"),
+        test_regexp_replace_all $ ("(\\w\\w)(\\w)", "", "abc def ijk", "$2$1", ok $ "cab fde kij"),
+        TestCase::empty
+    ].run_tests
+);
+
+strmul: I64 -> String -> String;
+strmul = |n, str| (
+    if n == 0 { "" };
+    str + strmul(n-1, str)
+);
+
+// https://swtch.com/~rsc/regexp/regexp1.html
+test_perf_n: I64 -> TestCase;
+test_perf_n = |n| (
+    let pattern = strmul(n,"a?") + strmul(n,"a");
+    let target = strmul(n,"a");
+    test_regexp_match $ (pattern, target, ok $ [target])
+);
+
+test_performance: TestCase;
+test_performance = (
+    [
+        test_perf_n $ 10,
+        test_perf_n $ 20,
+        test_perf_n $ 30,
+
+        // https://yamory.io/blog/about-redos-attack/
+        test_regexp_match $ ("^(([a-zA-Z0-9])+)+$", "abcdefghijklmnopqrstuvwxyzABC@", err $ _NotMatch),
+        TestCase::empty
+    ].run_tests
+);
+
+main: IO ();
+main = (
+    [
+        test_empty,
+        test_char_class_bracket,
+        test_char_class_nonbracket,
+        test_sequence,
+        test_assertion,
+        test_quant,
+        test_group,
+        test_either,
+        test_match_g,
+        test_match_all,
+        test_replace_all,
+        test_performance,
+        TestCase::empty
+    ]
+    .run_test_driver
+);
+

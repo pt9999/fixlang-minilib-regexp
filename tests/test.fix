@@ -1,0 +1,17 @@
+module Test;
+
+import Minilib.Testing.UnitTest;
+
+import RegexpTest;
+
+testsuite: TestSuite;
+testsuite = [
+    ("RegexpTest", RegexpTest::main),
+];
+
+
+test: IO ();
+test = (
+    testsuite.run
+);
+

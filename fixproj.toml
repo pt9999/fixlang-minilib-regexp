@@ -1,0 +1,35 @@
+[general]
+name = "minilib-regexp"
+version = "0.1.0"
+
+[build]
+opt_level = "separated"
+files = [
+    "lib/text/regexp.fix",
+    "lib/text/regexp/regexp_nfa.fix",
+    "lib/text/regexp/regexp_pattern.fix",
+]
+
+[build.test]
+opt_level = "separated"
+files = [
+    "tests/test.fix",
+    "tests/text/regexp_test.fix",
+]
+
+[[dependencies]]
+name = "minilib-common"
+version = "*"
+path = "../fixlang-minilib-common"
+
+[[dependencies]]
+name = "minilib-text"
+version = "*"
+path = "../fixlang-minilib-text"
+
+
+
+[[dependencies]]
+name = "hashmap"
+version = "*"
+git = { url = "https://github.com/tttmmmyyyy/fixlang-hashmap.git" }
