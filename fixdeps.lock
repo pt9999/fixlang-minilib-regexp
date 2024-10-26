@@ -43,7 +43,7 @@ path = ".fixlang/deps/minilib-text_0.1.0"
 
 [dependencies.git]
 repo = "https://github.com/pt9999/fixlang-minilib-text.git"
-rev = "eb17306482c2c9ddd7499644c966414cfce6ae40"
+rev = "cf23e81a7449c9c05fc094862bcca92317e466c4"
 
 [[dependencies]]
 name = "hashmap"
