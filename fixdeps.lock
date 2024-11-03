@@ -7,7 +7,7 @@ path = ".fixlang/deps/minilib-common_0.1.1"
 
 [dependencies.git]
 repo = "https://github.com/pt9999/fixlang-minilib-common.git"
-rev = "88f9ec9e382a09359ff51d55491825033e5cbf8b"
+rev = "10f1ac77347f1adb5c1cdaeec62983590b148642"
 
 [[dependencies]]
 name = "character"
@@ -20,12 +20,12 @@ rev = "c72c2ca5c8052e21200633dea1fff53c945d8799"
 
 [[dependencies]]
 name = "time"
-version = "0.2.3"
-path = ".fixlang/deps/time_0.2.3"
+version = "0.2.4"
+path = ".fixlang/deps/time_0.2.4"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-time.git"
-rev = "74d1b4e5e93be2d700153a60ba5cd87cf7a00a1c"
+rev = "e64401e0c48c8fe7777e9ad2ecea76dd0a02848b"
 
 [[dependencies]]
 name = "random"
@@ -43,7 +43,7 @@ path = ".fixlang/deps/minilib-text_0.1.0"
 
 [dependencies.git]
 repo = "https://github.com/pt9999/fixlang-minilib-text.git"
-rev = "4c0cd925762cb6544cfcb004bf3fecb87af694f6"
+rev = "9fd6aa5af7a93539266e21c846afec913241fd35"
 
 [[dependencies]]
 name = "hashmap"
