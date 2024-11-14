@@ -1,6 +1,8 @@
 [general]
 name = "minilib-regexp"
 version = "0.1.0"
+authors = ["pt9999"]
+license = "MIT"
 
 [build]
 opt_level = "separated"
