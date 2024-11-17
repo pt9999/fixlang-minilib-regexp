@@ -7,7 +7,7 @@ path = ".fixlang/deps/minilib-common_0.1.2"
 
 [dependencies.git]
 repo = "https://github.com/pt9999/fixlang-minilib-common.git"
-rev = "feaebc1d77638a3c6795d535ec9a0f0ec5809023"
+rev = "774e6c8781af3281a4f27a1583b620f474375e52"
 
 [[dependencies]]
 name = "character"
@@ -38,12 +38,12 @@ rev = "b77979767813d7cabff93e36c7516a8f8f8e90de"
 
 [[dependencies]]
 name = "minilib-text"
-version = "0.1.1"
-path = ".fixlang/deps/minilib-text_0.1.1"
+version = "0.1.2"
+path = ".fixlang/deps/minilib-text_0.1.2"
 
 [dependencies.git]
 repo = "https://github.com/pt9999/fixlang-minilib-text.git"
-rev = "489b82b79dfc8269e346923acf977a2a8e38f0bd"
+rev = "ea712004ef50d5e38490b929ed5b88220bdf03e2"
 
 [[dependencies]]
 name = "hashmap"
